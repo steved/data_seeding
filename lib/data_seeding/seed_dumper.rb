@@ -43,18 +43,18 @@ module DataSeeding
       unless Kernel.system(*args)
         $stderr.puts "An error occurred trying to dump the seed file to #{file}"
       end
-
-      if options[:docker_data]
-        dump_docker_data
-      end
     end
 
     def dump_docker_data
+      return unless options[:docker_data]
+
+      image = Docker::Image.create('fromImage' => 'busybox', 'Cmd' => %w{true})
+
       options[:docker_data].each do |path|
-        image = Docker::Image.create('fromImage' => 'busybox', 'Cmd' => %w{true})
-        image.insert_local('localPath' => path, 'outputPath' => '/')
-        puts "Built #{image.id} from #{path}"
+        image = image.insert_local('localPath' => path.to_s, 'outputPath' => "/#{File.basename(path)}")
       end
+
+      puts "Built #{image.id} from #{options[:docker_data].join(', ')}"
     end
   end
 end

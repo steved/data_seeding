@@ -43,11 +43,14 @@ namespace :seed do
 
   desc 'Dump the current version of your database data'
   task dump: ['db:load_config'] do
-    DataSeeding::SeedDumper.new(
+    dumper = DataSeeding::SeedDumper.new(
       DataSeeding.database_configuration,
       DataSeeding::Config.path,
       ignore_tables: DataSeeding::Config.ignore_tables,
       docker_data: DataSeeding::Config.docker_data
-    ).dump_seed
+    )
+
+    dumper.dump_seed
+    dumper.dump_docker_data
   end
 end
