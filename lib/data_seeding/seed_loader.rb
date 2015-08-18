@@ -2,7 +2,7 @@ module DataSeeding
   class SeedLoader
     attr_reader :configuration, :file
 
-    def initialize(configuration, file)
+    def initialize(configuration, file, options = {})
       @configuration, @file = configuration, file
     end
 

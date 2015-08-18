@@ -7,6 +7,7 @@ module DataSeeding
   module Config
     class << self
       attr_writer :path, :ignore_tables
+      attr_accessor :docker_data
 
       def path
         @path ||= Rails.application.root.join('db/seeds/data.sql')
@@ -49,8 +50,4 @@ module DataSeeding
       end
     end
   end
-end
-
-if defined?(Rails)
-  require_relative 'data_seeding/railtie'
 end

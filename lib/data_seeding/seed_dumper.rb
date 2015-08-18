@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'docker'
 
 module DataSeeding
   class SeedDumper
@@ -41,6 +42,18 @@ module DataSeeding
 
       unless Kernel.system(*args)
         $stderr.puts "An error occurred trying to dump the seed file to #{file}"
+      end
+
+      if options[:docker_data]
+        dump_docker_data
+      end
+    end
+
+    def dump_docker_data
+      options[:docker_data].each do |path|
+        image = Docker::Image.create('fromImage' => 'busybox', 'Cmd' => %w{true})
+        image.insert_local('localPath' => path, 'outputPath' => '/')
+        puts "Built #{image.id} from #{path}"
       end
     end
   end

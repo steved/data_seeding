@@ -37,8 +37,8 @@ namespace :seed do
       retry
     end
 
-    Rake.application.lookup('seed:dump', t.scope).invoke
-    Rake.application.lookup('db:drop', t.scope).invoke
+    Rake.application.lookup('seed:dump', t.scope).execute
+    Rake.application.lookup('db:drop', t.scope).execute
   end
 
   desc 'Dump the current version of your database data'
@@ -46,7 +46,8 @@ namespace :seed do
     DataSeeding::SeedDumper.new(
       DataSeeding.database_configuration,
       DataSeeding::Config.path,
-      ignore_tables: DataSeeding::Config.ignore_tables
+      ignore_tables: DataSeeding::Config.ignore_tables,
+      docker_data: DataSeeding::Config.docker_data
     ).dump_seed
   end
 end
