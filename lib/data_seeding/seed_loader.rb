@@ -7,11 +7,11 @@ module DataSeeding
     end
 
     def load_seed
-      # TODO check file exist
+      return unless File.exist?(file)
 
       args = ['mysql']
 
-      args.concat(['--user', configuration['user']]) if configuration['user']
+      args.concat(['--user', configuration['username']]) if configuration['username']
 
       # ??
       args.concat(['--default-character-set', configuration['encoding']]) if configuration['encoding']
@@ -27,7 +27,7 @@ module DataSeeding
       args << configuration['database']
 
       unless Kernel.system(*args)
-        raise 'well, shit'
+        $stderr.puts "An error occurred trying to load the seed file at #{file}"
       end
     end
   end

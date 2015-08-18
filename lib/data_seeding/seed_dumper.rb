@@ -1,10 +1,20 @@
+require 'fileutils'
+
 module DataSeeding
-  module DataDump
-    def self.data_dump(configuration, location, options = {})
-      # Stolen from https://github.com/rails/rails/blob/4-2-stable/activerecord/lib/active_record/tasks/mysql_database_tasks.rb
+  class SeedDumper
+    attr_reader :configuration, :file, :options
+
+    def initialize(configuration, file, options = {})
+      @configuration, @file, @options = configuration, file, options
+    end
+
+    def dump_seed
+      FileUtils.mkdir_p(File.dirname(file))
+
+      # Mostly stolen from https://github.com/rails/rails/blob/4-2-stable/activerecord/lib/active_record/tasks/mysql_database_tasks.rb
       args = ['mysqldump']
 
-      args.concat(['--user', configuration['user']]) if configuration['user']
+      args.concat(['--user', configuration['username']]) if configuration['username']
       args.concat(['--default-character-set', configuration['encoding']]) if configuration['encoding']
 
       args << "--password=#{configuration['password']}" if configuration['password']
@@ -25,11 +35,11 @@ module DataSeeding
       args << '--extended-insert=FALSE'
       args << '--complete-insert=TRUE'
 
-      args.concat(['--result-file', location.to_s])
+      args.concat(['--result-file', file.to_s])
       args << configuration['database']
 
       unless Kernel.system(*args)
-        raise 'well, shit'
+        $stderr.puts "An error occurred trying to dump the seed file to #{file}"
       end
     end
   end

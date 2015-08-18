@@ -1,61 +1,59 @@
 require 'ripl'
 
-task 'db:seed' => ['data_seeding:set_seed_loader']
+task 'db:seed' => ['seed:set_loader']
 
-namespace :data_seeding do
-  task :set_seed_loader do
+namespace :seed do
+  task set_loader: ['db:load_config'] do
     ActiveRecord::Tasks::DatabaseTasks.seed_loader = DataSeeding::SeedLoader.new(
       ActiveRecord::Tasks::DatabaseTasks.database_configuration['development'],
       Rails.application.root.join('db/seeds/data.sql')
     )
   end
 
-  namespace :seed do
-    task edit: [:environment, 'db:load_config'] do |t|
-      # Rails likes to check this and create a test DB
-      ENV['RAILS_ENV'] = 'development'
+  task :randomize_database_name do
+    configuration = ActiveRecord::Tasks::DatabaseTasks.database_configuration['development']
+    configuration['database'] = SecureRandom.hex(8)
+    puts "Using database '#{configuration['database']}'."
+  end
 
-      configuration = ActiveRecord::Tasks::DatabaseTasks.database_configuration['development']
-      configuration['database'] = SecureRandom.hex(8)
+  task :set_env do
+    # Rails likes to check this and create a test DB
+    ENV['RAILS_ENV'] = 'development'
+  end
 
-      puts "Using database '#{configuration['database']}'."
+  desc 'Interactively edit your data seeds'
+  task edit: [:environment, 'db:load_config', :set_env, :randomize_database_name, 'db:create', 'db:structure:load', 'db:seed'] do |t|
+    Ripl::Commands.include(DataSeeding::Commands)
 
-      silence_stream(STDOUT) do
-        ActiveRecord::Tasks::DatabaseTasks.create_current
-        ActiveRecord::Tasks::DatabaseTasks.load_schema_current
-        DataSeeding::SeedLoader.new(
-          ActiveRecord::Tasks::DatabaseTasks.database_configuration['development'],
-          Rails.application.root.join('db/seeds/data.sql')
-        ).load_seed
-      end
-
-      Ripl::Commands.include(DataSeeding::Commands)
-
-      begin
-        ActiveRecord::Base.transaction do
-          rollback = catch(:rollback) do
-            Ripl.start(argv: [])
-          end
-
-          if rollback
-            raise(DataSeeding::Rollback, 'user requested rollback')
-          end
+    begin
+      ActiveRecord::Base.transaction do
+        rollback = catch(:rollback) do
+          Ripl.start(argv: [])
         end
-      rescue DataSeeding::Rollback
-        puts 'Rolling back to original state.'
-        retry
+
+        if rollback
+          raise(DataSeeding::Rollback, 'user requested rollback')
+        end
       end
-
-      rake_task = Rake.application.lookup('data_seeding:seed:dump', t.scope)
-      rake_task.invoke
-      rake_task.reenable
+    rescue DataSeeding::Rollback
+      puts 'Rolling back to original state.'
+      retry
     end
 
-    task :dump do
-      DataSeeding::DataDump.data_dump(
-        ActiveRecord::Tasks::DatabaseTasks.current_config,
-        Rails.application.root.join('db/seeds/data.sql')
-      )
-    end
+    rake_task = Rake.application.lookup('seed:dump', t.scope)
+    rake_task.invoke
+    rake_task.reenable
+
+    rake_task = Rake.application.lookup('db:drop', t.scope)
+    rake_task.invoke
+    rake_task.reenable
+  end
+
+  desc 'Dump the current version of your database data'
+  task dump: ['db:load_config'] do
+    DataSeeding::SeedDumper.new(
+      ActiveRecord::Tasks::DatabaseTasks.database_configuration['development'],
+      Rails.application.root.join('db/seeds/data.sql')
+    ).dump_seed
   end
 end

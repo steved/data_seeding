@@ -1,5 +1,3 @@
-require_relative 'seed_loader'
-
 module DataSeeding
   class Railtie < Rails::Railtie
     dirname = File.expand_path(File.dirname(__FILE__))
