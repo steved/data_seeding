@@ -6,4 +6,5 @@ Gem::Specification.new do |gem|
   gem.summary = gem.description = 'Interactive data seeds'
 
   gem.add_dependency 'ripl'
+  gem.add_dependency 'docker-api'
 end
