@@ -4,4 +4,6 @@ Gem::Specification.new do |gem|
   gem.authors = ['Steven Davidovitz']
   gem.email = ['steven.davidovitz@gmail.com']
   gem.summary = gem.description = 'Interactive data seeds'
+
+  gem.add_dependency 'ripl'
 end
