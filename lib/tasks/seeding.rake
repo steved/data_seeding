@@ -1,17 +1,29 @@
 require 'ripl'
 
+task 'db:seed' => ['data_seeding:set_seed_loader']
+
 namespace :data_seeding do
-  task :seed do
+  task :set_seed_loader do
+    ActiveRecord::Tasks::DatabaseTasks.seed_loader = DataSeeding::SeedLoader.new(
+      ActiveRecord::Tasks::DatabaseTasks.database_configuration['development'],
+      Rails.application.root.join('db/seeds/data.sql')
+    )
   end
 
   namespace :seed do
     task edit: [:environment, 'db:load_config'] do |t|
-      configuration = ActiveRecord::Tasks::DatabaseTasks.database_configuration['development'].dup
+      # Rails likes to check this and create a test DB
+      ENV['RAILS_ENV'] = 'development'
+
+      configuration = ActiveRecord::Tasks::DatabaseTasks.database_configuration['development']
       configuration['database'] = SecureRandom.hex(8)
 
-      ActiveRecord::Tasks::DatabaseTasks.create(configuration)
-      ActiveRecord::Base.establish_connection(configuration)
-      ActiveRecord::Tasks::DatabaseTasks.load_schema_for(configuration, ActiveRecord::Base.schema_format, ActiveRecord::Tasks::DatabaseTasks.schema_file)
+      puts "Using database '#{configuration['database']}'."
+
+      silence_stream(STDOUT) do
+        ActiveRecord::Tasks::DatabaseTasks.create_current
+        ActiveRecord::Tasks::DatabaseTasks.load_schema_current
+      end
 
       Ripl::Commands.include(DataSeeding::Commands)
 
@@ -36,6 +48,10 @@ namespace :data_seeding do
     end
 
     task :dump do
+      DataSeeding::DataDump.data_dump(
+        ActiveRecord::Tasks::DatabaseTasks.current_config,
+        Rails.application.root.join('db/seeds/data.sql')
+      )
     end
   end
 end
