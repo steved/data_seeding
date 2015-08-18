@@ -2,25 +2,9 @@ require 'ripl'
 
 task 'db:seed' => ['seed:set_loader']
 
-module Seed
-  def load_seed
-    DataSeeding::SeedLoader.new(
-      Rails.application.config.database_configuration['development'],
-      Rails.application.root.join('db/seeds/data.sql')
-    ).load_seed
-  end
-end
-
 namespace :seed do
   task set_loader: ['db:load_config'] do
-    if defined?(ActiveRecord::Tasks::DatabaseTasks)
-      ActiveRecord::Tasks::DatabaseTasks.seed_loader = DataSeeding::SeedLoader.new(
-        ActiveRecord::Tasks::DatabaseTasks.database_configuration['development'],
-        Rails.application.root.join('db/seeds/data.sql')
-      )
-    else
-      Rails.application.class.prepend(Seed)
-    end
+    DataSeeding.set_seed_loader
   end
 
   task :randomize_database_name do
@@ -53,20 +37,16 @@ namespace :seed do
       retry
     end
 
-    rake_task = Rake.application.lookup('seed:dump', t.scope)
-    rake_task.invoke
-    rake_task.reenable
-
-    rake_task = Rake.application.lookup('db:drop', t.scope)
-    rake_task.invoke
-    rake_task.reenable
+    Rake.application.lookup('seed:dump', t.scope).invoke
+    Rake.application.lookup('db:drop', t.scope).invoke
   end
 
   desc 'Dump the current version of your database data'
   task dump: ['db:load_config'] do
     DataSeeding::SeedDumper.new(
-      (defined?(ActiveRecord::Tasks::DatabaseTasks) ? ActiveRecord::Tasks::DatabaseTasks : Rails.application.config).database_configuration['development'],
-      Rails.application.root.join('db/seeds/data.sql')
+      DataSeeding.database_configuration,
+      DataSeeding::Config.path,
+      ignore_tables: DataSeeding::Config.ignore_tables
     ).dump_seed
   end
 end

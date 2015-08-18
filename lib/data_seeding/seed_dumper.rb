@@ -26,7 +26,7 @@ module DataSeeding
       # End stealing
 
       args.concat(['--ignore-table', "#{configuration['database']}.schema_migrations"])
-      options.fetch(:ignore, []).each do |table|
+      options.fetch(:ignore_tables, []).each do |table|
         args.concat(['--ignore-table', "#{configuration['database']}.#{table}"])
       end
 
