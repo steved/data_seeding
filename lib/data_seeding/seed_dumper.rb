@@ -30,10 +30,11 @@ module DataSeeding
         args.concat(['--ignore-table', "#{configuration['database']}.#{table}"])
       end
 
-      args << '-t' # skip structure creation
+      args << '-t' # skips structure
       args << '--compact'
-      args << '--extended-insert=FALSE'
-      args << '--complete-insert=TRUE'
+      args << '--skip-extended-insert'
+      args << '--complete-insert'
+      args << '--disable-keys'
 
       args.concat(['--result-file', file.to_s])
       args << configuration['database']
