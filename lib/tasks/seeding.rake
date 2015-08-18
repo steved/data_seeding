@@ -23,6 +23,10 @@ namespace :data_seeding do
       silence_stream(STDOUT) do
         ActiveRecord::Tasks::DatabaseTasks.create_current
         ActiveRecord::Tasks::DatabaseTasks.load_schema_current
+        DataSeeding::SeedLoader.new(
+          ActiveRecord::Tasks::DatabaseTasks.database_configuration['development'],
+          Rails.application.root.join('db/seeds/data.sql')
+        ).load_seed
       end
 
       Ripl::Commands.include(DataSeeding::Commands)
