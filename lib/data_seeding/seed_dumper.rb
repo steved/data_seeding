@@ -32,10 +32,14 @@ module DataSeeding
       end
 
       args << '-t' # skips structure
-      args << '--compact'
+      args << '--skip-add-drop-table'
+      args << '--skip-add-locks'
+      args << '--skip-comments'
+      args << '--skip-disable-keys'
+      args << '--skip-set-charset'
       args << '--skip-extended-insert'
       args << '--complete-insert'
-      args << '--disable-keys'
+      args << '--replace'
 
       args.concat(['--result-file', file.to_s])
       args << configuration['database']
@@ -50,11 +54,11 @@ module DataSeeding
 
       image = Docker::Image.create('fromImage' => 'busybox', 'Cmd' => %w{true})
 
-      options[:docker_data].each do |path|
-        image = image.insert_local('localPath' => path.to_s, 'outputPath' => "/#{File.basename(path)}")
+      options[:docker_data].each do |path, output|
+        image = image.insert_local('localPath' => path.to_s, 'outputPath' => output.to_s)
       end
 
-      puts "Built #{image.id} from #{options[:docker_data].join(', ')}"
+      puts "Built #{image.id} from #{options[:docker_data].keys.join(', ')}"
     end
   end
 end

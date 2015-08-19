@@ -10,7 +10,10 @@ namespace :seed do
   task :randomize_database_name do
     configuration = ActiveRecord::Tasks::DatabaseTasks.database_configuration['development']
     configuration['database'] = SecureRandom.hex(8)
+
     puts "Using database '#{configuration['database']}'."
+
+    ActiveRecord::Base.configurations = ActiveRecord::Tasks::DatabaseTasks.database_configuration
   end
 
   task :set_env do
@@ -19,7 +22,7 @@ namespace :seed do
   end
 
   desc 'Interactively edit your data seeds'
-  task edit: [:environment, 'db:load_config', :set_env, :randomize_database_name, 'db:create', 'db:structure:load', 'db:seed'] do |t|
+  task edit: [:set_env, :randomize_database_name, 'db:create', 'db:structure:load', 'db:seed', :environment] do |t|
     Ripl::Commands.include(DataSeeding::Commands)
 
     begin

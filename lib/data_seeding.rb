@@ -22,7 +22,7 @@ module DataSeeding
   module LoadSeed
     def load_seed
       DataSeeding::SeedLoader.new(
-        database_configuration,
+        DataSeeding.database_configuration,
         DataSeeding::Config.path
       ).load_seed
     end
